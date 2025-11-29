@@ -1,82 +1,107 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import NavBar from './componentes/NavBar';
 import Footer from './componentes/Footer';
 import GraficosApex from './componentes/Graficos';
 import GestionVoluntarios from './componentes/GestionVoluntarios';
 import ResumenKpi from './componentes/ResumenKpi';
-import FiltroResultados from './componentes/Filter';
+import Filter from './componentes/Filter';
 import { useDashboardData } from './hooks/useDashboardData';
 
 function App() {
-  // 1. Llamamos al Hook Unificado
-  const { voluntarios, campanias, asistencias, loading } = useDashboardData();
-  const [filtros, setFiltros] = useState({});
+  const { voluntarios, campanias, loading, error } = useDashboardData();
+  
+  // Agregamos 'habilidad' al estado de filtros
+  const [filtros, setFiltros] = useState({
+    region: '',
+    estado: '',
+    busqueda: '',
+    habilidad: '' // Nuevo campo
+  });
+
+  // Lógica de Filtrado Mejorada
+  const datosFiltrados = useMemo(() => {
+    return voluntarios.filter(vol => {
+      // 1. Filtro Región
+      const matchRegion = !filtros.region || vol.region === filtros.region;
+      
+      // 2. Filtro Estado
+      const matchEstado = !filtros.estado || vol.estado === filtros.estado;
+      
+      // 3. Filtro Nombre (Búsqueda)
+      const matchBusqueda = !filtros.busqueda || 
+        vol.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase());
+
+      // 4. Filtro Habilidad (Busca en Ocupación O Carrera)
+      const termHabilidad = filtros.habilidad.toLowerCase();
+      const matchHabilidad = !filtros.habilidad || 
+        (vol.ocupacion && vol.ocupacion.toLowerCase().includes(termHabilidad)) ||
+        (vol.carrera && vol.carrera.toLowerCase().includes(termHabilidad));
+      
+      return matchRegion && matchEstado && matchBusqueda && matchHabilidad;
+    });
+  }, [voluntarios, filtros]);
+
+  const kpis = {
+    total: datosFiltrados.length,
+    activos: datosFiltrados.filter(v => v.estado === 'activo').length,
+    campaniasActivas: campanias.length
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFiltros(prev => ({ ...prev, [key]: value }));
+  };
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
         <div className="text-center">
-          <div className="spinner-border text-danger" role="status"></div>
-          <h4 className="mt-3">Cargando Dashboard Teletón...</h4>
+          <div className="spinner-border text-danger" role="status" style={{width: '3rem', height: '3rem'}}></div>
+          <p className="mt-3 text-muted fw-bold">Cargando Sistema Teletón...</p>
         </div>
       </div>
     );
   }
 
-  // 2. Calculamos KPIs con los datos reales
-  const totalVoluntarios = voluntarios.length;
-  
-  // Asumiendo que Activo="1" es activo
-  const totalActivos = voluntarios.filter(v => String(v.activo) === '1').length;
-  
-  // Campañas Totales
-  const totalCampanas = campanias.length;
-
-  // Cálculo de Tasa de Asistencia (Ej: Asistencia="1")
-  const asistenciasPositivas = asistencias.filter(a => String(a.asistencia) === '1').length;
-  const tasaAsistencia = asistencias.length > 0 
-    ? Math.round((asistenciasPositivas / asistencias.length) * 100) 
-    : 0;
-
-  const handleFilterChange = (campo, valor) => {
-    setFiltros(prev => ({ ...prev, [campo]: valor }));
-    // Aquí podrías implementar la lógica para filtrar los datos que pasas a los gráficos
-  };
+  if (error) {
+    return <div className="alert alert-danger m-5">{error}</div>;
+  }
 
   return (
-    <>
+    <div className="bg-light min-vh-100 d-flex flex-column">
       <NavBar/>
-      <div className="container mt-4 mb-5">
-        
-        {/* KPIs Superiores */}
-        <ResumenKpi 
-          totalVoluntarios={totalVoluntarios} 
-          totalActivos={totalActivos} 
-          totalCampanas={totalCampanas} 
-        />
-
-        {/* Alerta de Asistencia */}
-        <div className="alert alert-light border shadow-sm text-center mb-4">
-          <span className="h5">🎓 Tasa de Asistencia a Capacitaciones: </span>
-          <span className="h4 fw-bold text-success">{tasaAsistencia}%</span>
-          <small className="d-block text-muted mt-1">
-            ({asistenciasPositivas} asistencias confirmadas de {asistencias.length} registros)
-          </small>
+      
+      <div className="container py-5 flex-grow-1">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 className="fw-bold text-dark mb-0">Dashboard de Gestión</h2>
+            <p className="text-muted mb-0">Visión general de voluntarios y cobertura</p>
+          </div>
+          <span className="badge bg-white text-danger border shadow-sm p-2">
+            Resultados: {datosFiltrados.length}
+          </span>
         </div>
 
-        {/* Filtros y Gráficos */}
-        <FiltroResultados onFilterChange={handleFilterChange} />
+        <ResumenKpi kpis={kpis} />
 
-        {/* Gráficos con datos reales */}
-        {/* Nota: GraficosApex debe estar preparado para recibir la prop 'data' */}
-        <GraficosApex /> 
+        <Filter 
+          filtros={filtros} 
+          onFilterChange={handleFilterChange} 
+          regionesDisponibles={[...new Set(voluntarios.map(v => v.region).filter(Boolean))]} 
+        />
 
-        {/* Tabla de Gestión */}
-        <GestionVoluntarios />
+        {/* Los gráficos responden a los filtros de habilidad también */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <GraficosApex datos={datosFiltrados} />
+          </div>
+        </div>
+
+        {/* Tabla Detallada */}
+        <GestionVoluntarios datos={datosFiltrados} />
         
       </div>
       <Footer/>
-    </>
+    </div>
   );
 }
 

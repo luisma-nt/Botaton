@@ -1,40 +1,50 @@
 import React from 'react';
+import { Users, UserCheck, Megaphone } from 'lucide-react';
 
-function ResumenKpi({ totalVoluntarios, totalActivos, totalCampanas = 0 }) {
+function ResumenKpi({ kpis }) {
+  const { total, activos, campaniasActivas } = kpis;
+
+  const CardKpi = ({ title, value, icon: Icon, color, subtext }) => (
+    <div className="col-md-4 mb-3">
+      <div className="card border-0 shadow-sm h-100 overflow-hidden">
+        <div className="card-body d-flex align-items-center">
+          <div className={`rounded-3 p-3 me-3 bg-${color} bg-opacity-10`}>
+            <Icon size={32} className={`text-${color}`} />
+          </div>
+          <div>
+            <p className="text-muted mb-0 small text-uppercase fw-bold">{title}</p>
+            <h2 className="fw-bold mb-0 text-dark">{value}</h2>
+            <small className="text-muted">{subtext}</small>
+          </div>
+        </div>
+        <div className={`bg-${color} h-1 w-100`} style={{height: '4px'}}></div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="row mb-4">
-      {/* Tarjeta 1: Total Voluntarios */}
-      <div className="col-md-4">
-        <div className="card text-white bg-primary mb-3">
-          <div className="card-header">Total Voluntarios</div>
-          <div className="card-body">
-            <h2 className="card-title">{totalVoluntarios}</h2>
-            <p className="card-text">Registrados en el sistema</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tarjeta 2: Voluntarios Activos */}
-      <div className="col-md-4">
-        <div className="card text-white bg-success mb-3">
-          <div className="card-header">Voluntarios Activos</div>
-          <div className="card-body">
-            <h2 className="card-title">{totalActivos}</h2>
-            <p className="card-text">Disponibles para campañas</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tarjeta 3: Campañas (Ejemplo) */}
-      <div className="col-md-4">
-        <div className="card text-white bg-warning mb-3">
-          <div className="card-header">Campañas Activas</div>
-          <div className="card-body">
-            <h2 className="card-title">{totalCampanas}</h2>
-            <p className="card-text">Procesos de selección en curso</p>
-          </div>
-        </div>
-      </div>
+      <CardKpi 
+        title="Total Voluntarios" 
+        value={total} 
+        icon={Users} 
+        color="primary" 
+        subtext="Registrados filtrados"
+      />
+      <CardKpi 
+        title="Voluntarios Activos" 
+        value={activos} 
+        icon={UserCheck} 
+        color="success" 
+        subtext="Disponibles ahora"
+      />
+      <CardKpi 
+        title="Campañas Activas" 
+        value={campaniasActivas} 
+        icon={Megaphone} 
+        color="warning" 
+        subtext="En curso nacional"
+      />
     </div>
   );
 }

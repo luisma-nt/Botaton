@@ -1,229 +1,100 @@
-// src/components/GestionVoluntarios.jsx
-import { useState } from 'react';
-import { useVoluntarios } from '../hooks/useVoluntarios';
+import React from 'react';
 
-function GestionVoluntarios() {
-  const { voluntarios, loading, error, guardarVoluntario, buscarPorRegion } = useVoluntarios();
-  const [filtroRegion, setFiltroRegion] = useState('');
-  const [voluntarioForm, setVoluntarioForm] = useState({
-    idLegado: '',
-    nombre: '',
-    email: '',
-    telefono: '',
-    region: '',
-    habilidades: ''
-  });
+// --- ICONOS SVG ---
+const IconUser = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const IconMapPin = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1 text-danger opacity-75"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
+const IconMail = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2 text-primary"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>;
+const IconGraduation = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2 text-warning"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await guardarVoluntario(voluntarioForm);
-      setVoluntarioForm({
-        idLegado: '',
-        nombre: '',
-        email: '',
-        telefono: '',
-        region: '',
-        habilidades: ''
-      });
-      alert('Voluntario guardado exitosamente!');
-    } catch (err) {
-      alert('Error al guardar voluntario: ' + err.message);
-    }
+function GestionVoluntarios({ datos }) {
+  const displayData = datos.slice(0, 50);
+
+  const safeText = (text) => {
+    if (!text || text === "NULL" || text === "null") return null;
+    return String(text).trim();
   };
-
-  const handleFiltrarRegion = async () => {
-    if (!filtroRegion.trim()) return;
-    
-    try {
-      const resultado = await buscarPorRegion(filtroRegion);
-      // Aquí podrías mostrar los resultados filtrados en un modal o otra sección
-      alert(`Encontrados ${resultado.length} voluntarios en ${filtroRegion}`);
-    } catch (err) {
-      alert('Error al filtrar: ' + err.message);
-    }
-  };
-
-  if (loading && voluntarios.length === 0) {
-    return (
-      <div className="d-flex justify-content-center my-4">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Gestión de Voluntarios Teletón</h2>
-
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          Error: {error}
-        </div>
-      )}
-
-      {/* Formulario para agregar/actualizar voluntarios */}
-      <div className="card mb-4">
-        <div className="card-header">
-          <h5 className="mb-0">Agregar/Actualizar Voluntario</h5>
-        </div>
-        <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label">ID Legado (Excel)*</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={voluntarioForm.idLegado}
-                  onChange={(e) => setVoluntarioForm({...voluntarioForm, idLegado: e.target.value})}
-                  required
-                />
-                <div className="form-text">ID único del archivo Excel</div>
-              </div>
-              
-              <div className="col-md-6">
-                <label className="form-label">Nombre Completo*</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={voluntarioForm.nombre}
-                  onChange={(e) => setVoluntarioForm({...voluntarioForm, nombre: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  value={voluntarioForm.email}
-                  onChange={(e) => setVoluntarioForm({...voluntarioForm, email: e.target.value})}
-                />
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label">Teléfono</label>
-                <input
-                  type="tel"
-                  className="form-control"
-                  value={voluntarioForm.telefono}
-                  onChange={(e) => setVoluntarioForm({...voluntarioForm, telefono: e.target.value})}
-                />
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label">Región</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={voluntarioForm.region}
-                  onChange={(e) => setVoluntarioForm({...voluntarioForm, region: e.target.value})}
-                  placeholder="Ej: Metropolitana, Valparaíso..."
-                />
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label">Habilidades</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={voluntarioForm.habilidades}
-                  onChange={(e) => setVoluntarioForm({...voluntarioForm, habilidades: e.target.value})}
-                  placeholder="Ej: Medicina, Logística, IT..."
-                />
-              </div>
-
-              <div className="col-12">
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'Guardando...' : 'Guardar Voluntario'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
+    <div className="card border-0 shadow-sm mt-4">
+      <div className="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+        <h5 className="fw-bold mb-0 text-danger">Participantes Asociados</h5>
+        <span className="badge bg-light text-dark">Mostrando {displayData.length} registros</span>
       </div>
+      <div className="table-responsive">
+        <table className="table table-hover align-middle mb-0">
+          <thead className="bg-light">
+            <tr>
+              {/* --- ENCABEZADOS (5 Columnas) --- */}
+              <th className="border-0 ps-4">Nombre Voluntario</th>
+              <th className="border-0" style={{width: '25%'}}>Profesión / Ocupación</th>
+              <th className="border-0" style={{width: '25%'}}>Correo Generado</th>
+              <th className="border-0 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayData.map((vol) => (
+              <tr key={vol.id}>
+                
+                {/* 1. COLUMNA NOMBRE */}
+                <td className="ps-4">
+                  <div className="d-flex align-items-center">
+                      <div className="bg-light rounded-circle p-2 me-3 text-secondary">
+                          <IconUser />
+                      </div>
+                      <div>
+                          <div className="fw-bold text-dark">{safeText(vol.nombre) || "Sin Nombre"}</div>
+                          <div className="small text-muted" style={{fontSize: '0.75em'}}>ID: {vol.id}</div>
+                      </div>
+                  </div>
+                </td>
 
-      {/* Filtro por región */}
-      <div className="card mb-4">
-        <div className="card-header">
-          <h5 className="mb-0">Filtrar por Región</h5>
-        </div>
-        <div className="card-body">
-          <div className="row g-3 align-items-end">
-            <div className="col-md-8">
-              <label className="form-label">Región</label>
-              <input
-                type="text"
-                className="form-control"
-                value={filtroRegion}
-                onChange={(e) => setFiltroRegion(e.target.value)}
-                placeholder="Ej: Metropolitana"
-              />
-            </div>
-            <div className="col-md-4">
-              <button 
-                className="btn btn-outline-primary w-100"
-                onClick={handleFiltrarRegion}
-                disabled={loading || !filtroRegion.trim()}
-              >
-                Buscar en Región
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+                {/* 2. COLUMNA REGIÓN (Icono Mapa Rojo) */}
+                <td>
+                  <div className="d-flex align-items-center text-secondary fw-medium">
+                      <IconMapPin />
+                      {/* Aquí validamos explícitamente: si no hay región, mostrar texto por defecto */}
+                      <span className="ms-2">
+                        {safeText(vol.region) ? vol.region : <span className="text-muted fst-italic">Sin Región Asignada</span>}
+                      </span>
+                  </div>
+                </td>
 
-      {/* Lista de voluntarios */}
-      <div className="card">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">Voluntarios Registrados: {voluntarios.length}</h5>
-          <button 
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => window.location.reload()}
-          >
-            Actualizar
-          </button>
-        </div>
-        <div className="card-body">
-          {voluntarios.length === 0 ? (
-            <p className="text-muted text-center py-3">No hay voluntarios registrados</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th>ID Legado</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Región</th>
-                    <th>Habilidades</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {voluntarios.map(voluntario => (
-                    <tr key={voluntario.id || voluntario.idLegado}>
-                      <td>{voluntario.idLegado}</td>
-                      <td>{voluntario.nombre}</td>
-                      <td>{voluntario.email || '-'}</td>
-                      <td>{voluntario.telefono || '-'}</td>
-                      <td>
-                        {voluntario.region && (
-                          <span className="badge bg-primary">{voluntario.region}</span>
-                        )}
-                      </td>
-                      <td>{voluntario.habilidades || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                {/* 3. COLUMNA PROFESIÓN (Icono Birrete Amarillo) */}
+                <td>
+                  <div className="d-flex align-items-center text-dark">
+                      <IconGraduation />
+                      {/* Aquí mostramos vol.ocupacion */}
+                      <span>{safeText(vol.ocupacion) || <span className="text-muted fst-italic small">--</span>}</span>
+                  </div>
+                </td>
+
+                {/* 4. COLUMNA CORREO (Icono Sobre Azul) */}
+                <td>
+                  <div className="d-flex align-items-center text-dark">
+                      <IconMail />
+                      {/* Aquí mostramos vol.email */}
+                      <span className="small font-monospace text-primary">{vol.email}</span>
+                  </div>
+                </td>
+
+                {/* 5. COLUMNA ESTADO */}
+                <td className="text-center">
+                  <span className={`badge rounded-pill ${vol.estado === 'activo' ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'}`}>
+                    {vol.estado.toUpperCase()}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            
+            {displayData.length === 0 && (
+              <tr>
+                <td colSpan="5" className="text-center py-5 text-muted">
+                    No se encontraron registros.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
